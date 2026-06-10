@@ -1,14 +1,14 @@
 # Reps — AI-Powered Workout Tracker
 
-[![CI](https://github.com/<tu-usuario>/reps/actions/workflows/ci.yml/badge.svg)](https://github.com/<tu-usuario>/reps/actions/workflows/ci.yml)
-[![CD](https://github.com/<tu-usuario>/reps/actions/workflows/cd.yml/badge.svg)](https://github.com/<tu-usuario>/reps/actions/workflows/cd.yml)
+[![CI](https://github.com/Emape-g/reps/actions/workflows/ci.yml/badge.svg)](https://github.com/Emape-g/reps/actions/workflows/ci.yml)
+[![CD](https://github.com/Emape-g/reps/actions/workflows/cd.yml/badge.svg)](https://github.com/Emape-g/reps/actions/workflows/cd.yml)
 [![Deploy](https://img.shields.io/badge/demo-live-brightgreen)](https://reps-client.vercel.app)
 
-> Built with [Claude Code](https://claude.ai/code) · Powered by Google Gemini
+> Built with [Claude Code](https://claude.ai/code) · Powered by Groq + Llama 3.3
 
 ---
 
-¿Cuántas veces anotaste tu rutina en un papel que perdiste, o usaste una app que no entendía cómo entrenás? **Reps** es un tracker de entrenamiento full-stack que no solo registra tus series — sino que las *entiende*. Gracias a Google Gemini, analiza tu volumen semanal, el equilibrio entre cadenas musculares y la cobertura de grupos prioritarios, y te sugiere hasta 5 cambios concretos para mejorar tu rutina con un solo toque.
+¿Cuántas veces anotaste tu rutina en un papel que perdiste, o usaste una app que no entendía cómo entrenás? **Reps** es un tracker de entrenamiento full-stack que no solo registra tus series — sino que las *entiende*. Gracias a Groq y Llama 3.3, analiza tu volumen semanal, el equilibrio entre cadenas musculares y la cobertura de grupos prioritarios, y te sugiere hasta 5 cambios concretos para mejorar tu rutina con un solo toque.
 
 ---
 
@@ -18,7 +18,7 @@
 - **Catálogo de ejercicios** — filtrable por grupo muscular y cadena (push / pull / legs)
 - **Sesión activa** — logueá peso y reps set a set con referencia de la última sesión y resumen de completitud
 - **Seguimiento de progreso** — gráfico de peso máximo por ejercicio a lo largo del tiempo + tabla de historial completo
-- **Optimización con IA** — Gemini analiza tu rutina y te sugiere mejoras aplicables en un tap
+- **Optimización con IA** — Llama 3.3 analiza tu rutina y te sugiere mejoras aplicables en un tap
 
 ---
 
@@ -33,7 +33,7 @@
 | ORM | Prisma 5 |
 | Base de datos | PostgreSQL (Railway) |
 | Auth | JWT (jsonwebtoken) |
-| IA | Google Gemini (`@google/generative-ai`) |
+| IA | Groq (`groq-sdk`) · Llama 3.3 70B Versatile |
 | CI/CD | GitHub Actions |
 | Despliegue | Vercel (frontend) · Railway (backend + DB) |
 | Construido con | [Claude Code](https://claude.ai/code) |
@@ -46,7 +46,7 @@ Este proyecto fue construido en colaboración con herramientas de IA:
 
 - **[Claude Code](https://claude.ai/code)** — herramienta principal de desarrollo. Se usó el modo plan con Claude Opus 4.8 para diseñar la arquitectura y luego Claude Sonnet 4.6 para la generación de código: componentes React, rutas Express, esquemas Prisma, auth JWT, CI/CD y debugging.
 - **[Claude Cowork](https://claude.ai)** — planificación, documentación y decisiones de diseño desde el escritorio.
-- **[Google Gemini](https://aistudio.google.com)** (`gemini-1.5-flash`) — integrado en el producto: analiza la rutina del usuario en tiempo real y genera sugerencias de optimización basadas en volumen y balance muscular.
+- **[Groq](https://console.groq.com)** (`llama-3.3-70b-versatile`) — integrado en el producto: analiza la rutina del usuario en tiempo real y genera sugerencias de optimización basadas en volumen y balance muscular.
 
 Ver [INFORME.md](./INFORME.md) para la bitácora completa de la experiencia.
 
@@ -70,7 +70,7 @@ Ver [INFORME.md](./INFORME.md) para la bitácora completa de la experiencia.
 ### 1. Clonar e instalar
 
 ```bash
-git clone https://github.com/<tu-usuario>/reps.git
+git clone https://github.com/Emape-g/reps.git
 cd reps
 
 # Instalar dependencias de servidor
@@ -92,8 +92,8 @@ cp server/.env.example server/.env
 |---|---|
 | `DATABASE_URL` | Connection string de PostgreSQL |
 | `JWT_SECRET` | String hex aleatorio de 32 bytes |
-| `GEMINI_API_KEY` | API key desde [Google AI Studio](https://aistudio.google.com) |
-| `GEMINI_MODEL` | Nombre del modelo (default: `gemini-1.5-flash`) |
+| `GROQ_API_KEY` | API key desde [Groq Console](https://console.groq.com) |
+| `GROQ_MODEL` | Nombre del modelo (default: `llama-3.3-70b-versatile`) |
 | `CLIENT_URL` | Origen del frontend para CORS (default: `http://localhost:5173`) |
 | `PORT` | Puerto del servidor (default: `3001`) |
 
@@ -163,7 +163,7 @@ Para habilitar el CD, agregá los siguientes secrets en tu repo de GitHub:
 
 1. Creá un proyecto en Railway y añadí un plugin **PostgreSQL**.
 2. Agregá el servicio apuntando a este repo con root directory en `server/`.
-3. Railway setea `DATABASE_URL` automáticamente. Agregá `JWT_SECRET`, `GEMINI_API_KEY`, `GEMINI_MODEL` y `CLIENT_URL` (tu URL de Vercel) en la pestaña Variables.
+3. Railway setea `DATABASE_URL` automáticamente. Agregá `JWT_SECRET`, `GROQ_API_KEY`, `GROQ_MODEL` y `CLIENT_URL` (tu URL de Vercel) en la pestaña Variables.
 4. El `railway.toml` configura los comandos de build y start automáticamente.
 
 ### Frontend → Vercel

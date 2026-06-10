@@ -16,9 +16,9 @@ El proceso fue: usar el **modo plan con Claude Opus 4.8** para pensar la arquite
 
 Usado para tareas de planificación, generación de documentación y apoyo en decisiones de diseño desde la interfaz de escritorio. Complementó a Claude Code para el trabajo que no requería acceso directo al codebase.
 
-### Google Gemini (`gemini-1.5-flash`)
+### Groq + Llama 3.3 (`llama-3.3-70b-versatile`)
 
-Integrado como feature dentro del producto. El endpoint `/api/optimize` recibe el historial de entrenamiento del usuario, calcula métricas de volumen y balance muscular, y las envía a Gemini con un prompt estructurado que instruye al modelo a responder en JSON con hasta 5 sugerencias de swap de ejercicios.
+Integrado como feature dentro del producto. El endpoint `/api/optimize` recibe el historial de entrenamiento del usuario, calcula métricas de volumen y balance muscular, y las envía a Llama 3.3 vía Groq con un prompt estructurado que instruye al modelo a responder en JSON con hasta 5 sugerencias de swap de ejercicios. Se eligió Groq por su API compatible con OpenAI SDK y la baja latencia de su infraestructura de inferencia.
 
 ---
 

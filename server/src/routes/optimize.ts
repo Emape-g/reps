@@ -32,9 +32,9 @@ const MUSCLE_TARGETS: Record<string, { min: number; max: number }> = {
   'Trapecios':   { min: 6,  max: 14 },
 }
 
-// ── Zod schema for Gemini response (section 7.4) ──────────────────────────────
+// ── Zod schema for LLM response (section 7.4) ──────────────────────────────
 
-const GeminiResponseSchema = z.object({
+const LLMResponseSchema = z.object({
   muscleSummary: z.array(z.object({
     muscle:         z.string(),
     weeklySets:     z.number(),
@@ -67,7 +67,7 @@ const GeminiResponseSchema = z.object({
   summary:      z.string(),
 })
 
-type GeminiResponse = z.infer<typeof GeminiResponseSchema>
+type LLMResponse = z.infer<typeof LLMResponseSchema>
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -222,14 +222,14 @@ Generá el análisis. Usá los IDs exactos de dayId e itemId de la rutina y nomb
 
 // ── Groq call ─────────────────────────────────────────────────────────────────
 
-async function callGroq(systemPrompt: string, userPrompt: string): Promise<GeminiResponse> {
+async function callGroq(systemPrompt: string, userPrompt: string): Promise<LLMResponse> {
   const key = process.env.GROQ_API_KEY
   if (!key) throw new Error('GROQ_API_KEY no configurada en el servidor')
 
   const groq = new Groq({ apiKey: key })
   const model = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile'
 
-  async function attempt(isRetry: boolean): Promise<GeminiResponse> {
+  async function attempt(isRetry: boolean): Promise<LLMResponse> {
     const retryNote = isRetry
       ? '\n\n⚠️ El intento anterior falló la validación de esquema. Incluí TODOS los campos requeridos con los tipos correctos.'
       : ''
@@ -244,7 +244,7 @@ async function callGroq(systemPrompt: string, userPrompt: string): Promise<Gemin
     const raw = (completion.choices[0].message.content ?? '').trim()
     // Strip markdown code fences just in case
     const json = raw.startsWith('{') ? raw : (raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/)?.[1] ?? raw)
-    return GeminiResponseSchema.parse(JSON.parse(json))
+    return LLMResponseSchema.parse(JSON.parse(json))
   }
 
   try {
@@ -322,12 +322,12 @@ router.post('/:id/optimize', requireAuth, async (req, res) => {
       routineData, user, muscleSets, anteriorSets, posteriorSets, catalog,
     )
 
-    const geminiResult = await callGroq(systemPrompt, userPrompt)
+    const llmResult = await callGroq(systemPrompt, userPrompt)
 
     // Augment each suggestion with the resolved exercise ID from the catalog
     const augmented = {
-      ...geminiResult,
-      suggestions: geminiResult.suggestions.map((s) => ({
+      ...llmResult,
+      suggestions: llmResult.suggestions.map((s) => ({
         ...s,
         suggestedExerciseId: catalogByName.get(s.suggestedExercise.toLowerCase())?.id ?? null,
       })),
