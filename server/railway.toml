@@ -1,0 +1,12 @@
+[build]
+builder = "nixpacks"
+# Install ALL deps (including devDeps for tsx/prisma CLI) then generate client + compile
+buildCommand = "npm ci --include=dev && npm run build"
+
+[deploy]
+# Apply migrations then start — db:push is safe to re-run on restarts
+startCommand = "npx prisma migrate deploy && node dist/index.js"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3

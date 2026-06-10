@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+dist/
+build/
+client/dist/
+server/dist/
+*.tsbuildinfo
+
+# Environment variables (NUNCA commitear secrets)
+.env
+.env.local
+.env.*.local
+.env.development
+.env.production
+# Permitir los ejemplos
+!.env.example
+
+# Base de datos local (SQLite)
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# Prisma client generado
+node_modules/.prisma/
+
+# Config local de herramientas de IA / editor
+.claude/
+**/.claude/
+
+# Deploy / plataformas
+.vercel
+.railway
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Caches
+.cache/
+.vite/
+coverage/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini

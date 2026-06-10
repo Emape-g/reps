@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reps</title>
+    <!-- Prevent flash of wrong theme before React loads -->
+    <script>
+      try {
+        var t = localStorage.getItem('theme');
+        document.documentElement.classList.toggle('dark', t !== 'light');
+      } catch (_) {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

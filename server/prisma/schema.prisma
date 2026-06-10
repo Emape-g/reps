@@ -1,0 +1,79 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String        @id @default(cuid())
+  name           String
+  email          String        @unique
+  password       String
+  daysPerWeek    Int?
+  goal           String?
+  priorities     String?
+  onboardingDone Boolean       @default(false)
+  theme          String?
+  createdAt      DateTime      @default(now())
+  routines       Routine[]
+  progressLogs   ProgressLog[]
+}
+
+model Exercise {
+  id            String        @id @default(cuid())
+  name          String        @unique
+  primaryMuscle String
+  secondary     String
+  chain         String
+  createdAt     DateTime      @default(now())
+  routineItems  RoutineItem[]
+  progressLogs  ProgressLog[]
+}
+
+model Routine {
+  id        String       @id @default(cuid())
+  name      String
+  userId    String
+  user      User         @relation(fields: [userId], references: [id])
+  days      RoutineDay[]
+  createdAt DateTime     @default(now())
+}
+
+model RoutineDay {
+  id        String        @id @default(cuid())
+  routineId String
+  routine   Routine       @relation(fields: [routineId], references: [id], onDelete: Cascade)
+  dayNumber Int
+  label     String
+  items     RoutineItem[]
+}
+
+model RoutineItem {
+  id           String        @id @default(cuid())
+  dayId        String
+  day          RoutineDay    @relation(fields: [dayId], references: [id], onDelete: Cascade)
+  exerciseId   String
+  exercise     Exercise      @relation(fields: [exerciseId], references: [id])
+  sets         Int
+  reps         String
+  restSeconds  Int
+  order        Int
+  progressLogs ProgressLog[]
+}
+
+model ProgressLog {
+  id         String      @id @default(cuid())
+  itemId     String
+  item       RoutineItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  exerciseId String
+  exercise   Exercise    @relation(fields: [exerciseId], references: [id])
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  weight     Float
+  reps       Int
+  setNumber  Int
+  loggedAt   DateTime    @default(now())
+}

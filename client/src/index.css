@@ -1,0 +1,96 @@
+@import '@fontsource-variable/inter';
+@import '@fontsource-variable/space-grotesk';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Semantic color tokens ─────────────────────────────────────────────────────
+   Bare RGB channels so Tailwind opacity modifiers work: bg-primary/20
+   ─────────────────────────────────────────────────────────────────────────── */
+
+:root {
+  --color-bg:          248 248 251;
+  --color-surface:     255 255 255;
+  --color-surface-hi:  243 243 247;
+  --color-border:      226 226 234;
+  --color-text:         13  13  20;
+  --color-text-muted:  107 107 130;
+  --color-primary:      77 124  10;  /* lime-700 – readable on white */
+  --color-primary-hi:   54  83   6;  /* lime-800 – hover */
+  --color-on-primary:  255 255 255;
+  --color-success:      22 163  74;  /* green-600 */
+  --color-danger:      220  38  38;  /* red-600 */
+  --color-warning:     217 119   6;  /* amber-600 */
+}
+
+.dark {
+  --color-bg:            9   9  15;
+  --color-surface:      17  17  25;
+  --color-surface-hi:   26  26  38;
+  --color-border:       38  38  55;
+  --color-text:        236 236 241;
+  --color-text-muted:  130 130 158;
+  --color-primary:     163 230  53;  /* lime-400 – vibrant on dark */
+  --color-primary-hi:  190 242 100;  /* lime-300 – hover */
+  --color-on-primary:    9   9  15;  /* dark text on lime */
+  --color-success:      74 222 128;  /* green-400 */
+  --color-danger:      248 113 113;  /* red-400 */
+  --color-warning:     251 191  36;  /* amber-400 */
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  html.dark  { color-scheme: dark;  }
+  html:not(.dark) { color-scheme: light; }
+
+  body {
+    @apply bg-bg text-text font-sans antialiased;
+    min-height: 100dvh;
+  }
+
+  :focus-visible {
+    outline: 2px solid rgb(var(--color-primary) / 0.65);
+    outline-offset: 2px;
+  }
+
+  .dark ::-webkit-scrollbar { width: 6px; height: 6px; }
+  .dark ::-webkit-scrollbar-track { background: transparent; }
+  .dark ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+}
+
+/* ── Reusable component classes ───────────────────────────────────────────── */
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 font-semibold rounded-xl
+           bg-primary text-on-primary
+           hover:bg-primary-hi active:opacity-80
+           disabled:opacity-40 disabled:cursor-not-allowed
+           transition-colors duration-150
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-bg;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 font-medium rounded-xl
+           text-muted hover:text-text hover:bg-surface-hi
+           disabled:opacity-40 disabled:cursor-not-allowed
+           transition-colors duration-150
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50;
+  }
+
+  .input-base {
+    @apply w-full bg-surface border border-border rounded-xl px-3 py-2.5 text-sm text-text
+           placeholder:text-muted/60
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/50
+           transition-colors duration-150;
+  }
+
+  .card {
+    @apply bg-surface border border-border rounded-2xl shadow-card;
+  }
+}
