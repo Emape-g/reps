@@ -85,6 +85,15 @@ export default function Login() {
             Registrate
           </Link>
         </p>
+
+        <button
+          type="button"
+          onClick={() => { setEmail('demo@fitai.app'); setPassword('demo1234') }}
+          className="w-full mt-4 text-center text-xs text-muted bg-surface-hi border border-border rounded-xl px-3 py-2.5 hover:border-primary/40 transition-colors"
+        >
+          <span className="block font-medium text-text mb-0.5">Cuenta de demo · tocá para autocompletar</span>
+          demo@fitai.app · demo1234
+        </button>
       </div>
     </div>
   )
