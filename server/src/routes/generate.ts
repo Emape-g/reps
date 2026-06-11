@@ -23,14 +23,15 @@ const LLMGenerateSchema = z.object({
   days: z
     .array(
       z.object({
-        dayNumber: z.number().int().min(1).max(7),
+        dayNumber: z.coerce.number().int().min(1).max(7),
         label: z.string().min(1).max(120),
         items: z.array(
           z.object({
-            exerciseId: z.string().min(1),
-            sets: z.number().int().min(1).max(10),
+            // El LLM devuelve el número de referencia del catálogo (no el cuid)
+            ref: z.coerce.number().int().min(1),
+            sets: z.coerce.number().int().min(1).max(10),
             reps: z.string().regex(/^\d+(-\d+)?$/),
-            restSeconds: z.number().int().min(0).max(600),
+            restSeconds: z.coerce.number().int().min(0).max(600),
           }),
         ),
       }),
@@ -68,7 +69,7 @@ Tu tarea es crear rutinas de entrenamiento completas, bien estructuradas y cient
 
 REGLAS ESTRICTAS:
 1. Respondés ÚNICAMENTE con JSON válido, sin texto adicional ni markdown
-2. Los exerciseId son los IDs EXACTOS del catálogo proporcionado — no los inventes ni modifiques
+2. El "ref" de cada ejercicio es el NÚMERO del catálogo numerado proporcionado — elegí solo números que aparezcan en la lista, nunca inventes ni uses números fuera de rango
 3. El número de días debe coincidir exactamente con daysPerWeek del usuario
 4. dayNumber va de 1 a daysPerWeek sin repetir
 5. sets: entero 1-10, reps: formato "N" o "N-M" (ej: "5" o "8-12"), restSeconds: entero 30-600
@@ -89,7 +90,7 @@ function buildUserPrompt(
   const defaults = getGoalDefaults(goal)
 
   const catalogStr = catalog
-    .map((e) => `  {"id":"${e.id}","name":"${e.name}","primaryMuscle":"${e.primaryMuscle}","chain":"${e.chain}"}`)
+    .map((e, i) => `  ${i + 1}. ${e.name} [${e.primaryMuscle} · ${e.chain}]`)
     .join('\n')
 
   const jsonSchema = `{
@@ -99,7 +100,7 @@ function buildUserPrompt(
       "dayNumber": number(1-${daysPerWeek}),
       "label": string,
       "items": [
-        {"exerciseId": string, "sets": number, "reps": string, "restSeconds": number}
+        {"ref": number, "sets": number, "reps": string, "restSeconds": number}
       ]
     }
   ]
@@ -123,13 +124,13 @@ function buildUserPrompt(
 ## Parámetros de referencia para "${goal}"
 - Series: ${defaults.sets}, Reps: ${defaults.reps}, Descanso: ${defaults.restSeconds}s
 
-## Catálogo de ejercicios disponibles (usá SOLO estos IDs exactos)
+## Catálogo de ejercicios disponibles (elegí por el NÚMERO de la izquierda → ese es el "ref")
 ${catalogStr}
 ${refinementBlock}
 ## Formato de respuesta requerido (JSON estricto, sin markdown)
 ${jsonSchema}
 
-${action} Usá los IDs del catálogo tal cual aparecen arriba.`
+${action} En cada item, "ref" es el número del ejercicio en el catálogo de arriba (entre 1 y ${catalog.length}).`
 }
 
 // ── Groq call ─────────────────────────────────────────────────────────────────
@@ -151,7 +152,7 @@ async function callGroq(
 
   async function attempt(isRetry: boolean): Promise<z.infer<typeof LLMGenerateSchema>> {
     const note = isRetry
-      ? '\n\n⚠️ Intento anterior falló validación. Usá solo IDs exactos del catálogo y formato "N-M" para reps.'
+      ? `\n\n⚠️ Intento anterior falló validación. Usá solo números de "ref" entre 1 y ${catalog.length} del catálogo, y formato "N-M" para reps.`
       : ''
     const completion = await groq.chat.completions.create({
       model,
@@ -163,7 +164,17 @@ async function callGroq(
     })
     const raw = (completion.choices[0].message.content ?? '').trim()
     const json = raw.startsWith('{') ? raw : (raw.match(/```(?:json)?\s*([\s\S]*?)\s*```/)?.[1] ?? raw)
-    return LLMGenerateSchema.parse(JSON.parse(json))
+    const parsed = LLMGenerateSchema.parse(JSON.parse(json))
+
+    // Validar que todos los "ref" estén dentro del rango del catálogo
+    for (const day of parsed.days) {
+      for (const item of day.items) {
+        if (item.ref < 1 || item.ref > catalog.length) {
+          throw new Error(`ref fuera de rango: ${item.ref} (catálogo: 1-${catalog.length})`)
+        }
+      }
+    }
+    return parsed
   }
 
   try {
@@ -185,27 +196,29 @@ router.post('/generate', requireAuth, validate(GenerateRequestSchema), async (re
       select: { id: true, name: true, primaryMuscle: true, chain: true },
     })
 
-    const catalogById = new Map(catalog.map((e) => [e.id, e]))
+    if (catalog.length === 0) {
+      throw new Error('El catálogo de ejercicios está vacío en la base de datos (¿corrió el seed?)')
+    }
 
     const llmResult = await callGroq(catalog, goal, daysPerWeek, priorities, suggestion, currentPlan)
 
-    // Validate all exerciseIds are real catalog IDs
-    for (const day of llmResult.days) {
-      for (const item of day.items) {
-        if (!catalogById.has(item.exerciseId)) {
-          throw new Error(`ID de ejercicio inválido devuelto por el LLM: ${item.exerciseId}`)
-        }
-      }
-    }
-
-    // Augment with exercise metadata for the preview
+    // Mapear cada "ref" (número del catálogo) al ejercicio real. El rango ya fue
+    // validado dentro de callGroq, así que catalog[ref - 1] siempre existe.
     const result = {
-      ...llmResult,
+      name: llmResult.name,
       days: llmResult.days.map((day) => ({
-        ...day,
+        dayNumber: day.dayNumber,
+        label: day.label,
         items: day.items.map((item) => {
-          const ex = catalogById.get(item.exerciseId)!
-          return { ...item, exerciseName: ex.name, primaryMuscle: ex.primaryMuscle }
+          const ex = catalog[item.ref - 1]
+          return {
+            exerciseId: ex.id,
+            exerciseName: ex.name,
+            primaryMuscle: ex.primaryMuscle,
+            sets: item.sets,
+            reps: item.reps,
+            restSeconds: item.restSeconds,
+          }
         }),
       })),
     }
