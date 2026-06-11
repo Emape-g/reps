@@ -14,6 +14,8 @@ const GenerateRequestSchema = z.object({
   goal: z.string().min(1),
   daysPerWeek: z.number().int().min(1).max(7),
   priorities: z.array(z.string()).default([]),
+  suggestion: z.string().optional(),
+  currentPlan: z.string().optional(),
 })
 
 const LLMGenerateSchema = z.object({
@@ -81,6 +83,8 @@ function buildUserPrompt(
   goal: string,
   daysPerWeek: number,
   priorities: string[],
+  suggestion?: string,
+  currentPlan?: string,
 ): string {
   const defaults = getGoalDefaults(goal)
 
@@ -101,6 +105,14 @@ function buildUserPrompt(
   ]
 }`
 
+  const refinementBlock = suggestion && currentPlan
+    ? `\n## Rutina actual (a modificar)\n${currentPlan}\n\n## Sugerencia del usuario\n${suggestion}\n\nAplicá la sugerencia a la rutina actual manteniendo la estructura general.`
+    : ''
+
+  const action = suggestion && currentPlan
+    ? `Refiná la rutina aplicando la sugerencia del usuario.`
+    : `Generá una rutina de exactamente ${daysPerWeek} día(s) con el split más apropiado para "${goal}".`
+
   return `# Generar rutina de entrenamiento
 
 ## Perfil del usuario
@@ -113,11 +125,11 @@ function buildUserPrompt(
 
 ## Catálogo de ejercicios disponibles (usá SOLO estos IDs exactos)
 ${catalogStr}
-
+${refinementBlock}
 ## Formato de respuesta requerido (JSON estricto, sin markdown)
 ${jsonSchema}
 
-Generá una rutina de exactamente ${daysPerWeek} día(s) con el split más apropiado para "${goal}". Usá los IDs del catálogo tal cual aparecen arriba.`
+${action} Usá los IDs del catálogo tal cual aparecen arriba.`
 }
 
 // ── Groq call ─────────────────────────────────────────────────────────────────
@@ -127,13 +139,15 @@ async function callGroq(
   goal: string,
   daysPerWeek: number,
   priorities: string[],
+  suggestion?: string,
+  currentPlan?: string,
 ): Promise<z.infer<typeof LLMGenerateSchema>> {
   const key = process.env.GROQ_API_KEY
   if (!key) throw new Error('GROQ_API_KEY no configurada en el servidor')
 
   const groq = new Groq({ apiKey: key })
   const model = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile'
-  const userPrompt = buildUserPrompt(catalog, goal, daysPerWeek, priorities)
+  const userPrompt = buildUserPrompt(catalog, goal, daysPerWeek, priorities, suggestion, currentPlan)
 
   async function attempt(isRetry: boolean): Promise<z.infer<typeof LLMGenerateSchema>> {
     const note = isRetry
@@ -164,7 +178,7 @@ async function callGroq(
 
 router.post('/generate', requireAuth, validate(GenerateRequestSchema), async (req, res) => {
   try {
-    const { goal, daysPerWeek, priorities } = req.body as z.infer<typeof GenerateRequestSchema>
+    const { goal, daysPerWeek, priorities, suggestion, currentPlan } = req.body as z.infer<typeof GenerateRequestSchema>
 
     const catalog = await prisma.exercise.findMany({
       orderBy: { name: 'asc' },
@@ -173,7 +187,7 @@ router.post('/generate', requireAuth, validate(GenerateRequestSchema), async (re
 
     const catalogById = new Map(catalog.map((e) => [e.id, e]))
 
-    const llmResult = await callGroq(catalog, goal, daysPerWeek, priorities)
+    const llmResult = await callGroq(catalog, goal, daysPerWeek, priorities, suggestion, currentPlan)
 
     // Validate all exerciseIds are real catalog IDs
     for (const day of llmResult.days) {

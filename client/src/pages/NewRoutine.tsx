@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, Sparkles, LayoutTemplate, PenLine,
-  RotateCw, Dumbbell, AlertCircle, ChevronRight,
+  RotateCw, Dumbbell, AlertCircle, ChevronRight, Trash2, Send,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { apiFetch } from '../lib/api'
@@ -196,7 +196,15 @@ function StepDots({ step, total }: { step: number; total: number }) {
   )
 }
 
-function PreviewDayCard({ day }: { day: ProposedDay }) {
+function EditableDayCard({
+  day,
+  onUpdate,
+  onRemove,
+}: {
+  day: ProposedDay
+  onUpdate: (itemIdx: number, field: 'sets' | 'reps', value: string | number) => void
+  onRemove: (itemIdx: number) => void
+}) {
   return (
     <div className="bg-surface-hi border border-border rounded-2xl overflow-hidden">
       <div className="flex items-center gap-3 px-4 py-3 bg-surface border-b border-border">
@@ -204,22 +212,47 @@ function PreviewDayCard({ day }: { day: ProposedDay }) {
           {WEEKDAY[day.dayNumber] ?? `Día ${day.dayNumber}`}
         </span>
         <span className="text-sm font-semibold text-text truncate">{day.label}</span>
+        <span className="ml-auto text-[10px] text-muted shrink-0">{day.items.length} ejercicios</span>
       </div>
       {day.items.length === 0 ? (
-        <p className="text-xs text-muted text-center py-4">Sin ejercicios — podés agregar en el editor</p>
+        <p className="text-xs text-muted text-center py-4">Sin ejercicios</p>
       ) : (
         <div className="divide-y divide-border/30">
           {day.items.map((item, idx) => (
-            <div key={idx} className="flex items-center justify-between px-4 py-2.5 gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`text-xs font-medium px-1.5 py-0.5 rounded-full shrink-0 ${muscleBadgeClass(item.primaryMuscle)}`}>
-                  {item.primaryMuscle}
-                </span>
-                <span className="text-xs text-text truncate">{item.exerciseName}</span>
+            <div key={idx} className="flex items-center gap-2 px-4 py-2.5">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full shrink-0 ${muscleBadgeClass(item.primaryMuscle)}`}>
+                    {item.primaryMuscle}
+                  </span>
+                  <span className="text-xs text-text truncate">{item.exerciseName}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-[10px] text-muted uppercase tracking-wide">Series</label>
+                  <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={item.sets}
+                    onChange={(e) => onUpdate(idx, 'sets', parseInt(e.target.value) || 1)}
+                    className="w-11 text-xs text-center bg-surface border border-border rounded-lg px-1 py-0.5 text-text focus:border-primary focus:outline-none"
+                  />
+                  <label className="text-[10px] text-muted uppercase tracking-wide">Reps</label>
+                  <input
+                    type="text"
+                    value={item.reps}
+                    onChange={(e) => onUpdate(idx, 'reps', e.target.value)}
+                    className="w-16 text-xs text-center bg-surface border border-border rounded-lg px-1 py-0.5 text-text focus:border-primary focus:outline-none"
+                  />
+                </div>
               </div>
-              <span className="text-xs text-muted shrink-0 tabular-nums">
-                {item.sets}×{item.reps}
-              </span>
+              <button
+                onClick={() => onRemove(idx)}
+                className="shrink-0 p-1.5 text-muted hover:text-danger transition-colors rounded-lg hover:bg-danger/10"
+                title="Eliminar ejercicio"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
             </div>
           ))}
         </div>
@@ -260,6 +293,8 @@ export default function NewRoutine() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0)
+  const [suggestion, setSuggestion] = useState('')
+  const [refining, setRefining] = useState(false)
 
   // Cycle loading messages while generating
   useEffect(() => {
@@ -308,6 +343,59 @@ export default function NewRoutine() {
       setGenError(err instanceof Error ? err.message : 'Error al contactar con el servidor')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  function updateItem(dayNum: number, itemIdx: number, field: 'sets' | 'reps', value: string | number) {
+    if (!proposed) return
+    setProposed({
+      ...proposed,
+      days: proposed.days.map((d) =>
+        d.dayNumber === dayNum
+          ? { ...d, items: d.items.map((item, i) => (i === itemIdx ? { ...item, [field]: value } : item)) }
+          : d,
+      ),
+    })
+  }
+
+  function removeItem(dayNum: number, itemIdx: number) {
+    if (!proposed) return
+    setProposed({
+      ...proposed,
+      days: proposed.days.map((d) =>
+        d.dayNumber === dayNum
+          ? { ...d, items: d.items.filter((_, i) => i !== itemIdx) }
+          : d,
+      ),
+    })
+  }
+
+  async function handleRefine(): Promise<void> {
+    if (!proposed || !suggestion.trim()) return
+    setRefining(true)
+    setGenError(null)
+    setSaveError(null)
+    try {
+      const currentPlan = JSON.stringify(proposed, null, 2)
+      const res = await apiFetch('/api/routines/generate', {
+        method: 'POST',
+        body: JSON.stringify({
+          goal: aiGoal,
+          daysPerWeek: aiDays,
+          priorities: aiPriorities,
+          suggestion: suggestion.trim(),
+          currentPlan,
+        }),
+      })
+      const body = (await res.json()) as ProposedRoutine & { error?: string }
+      if (!res.ok) throw new Error(body.error ?? 'Error al refinar la rutina')
+      setProposed(body)
+      setRoutineName(body.name)
+      setSuggestion('')
+    } catch (err) {
+      setGenError(err instanceof Error ? err.message : 'Error al contactar con el servidor')
+    } finally {
+      setRefining(false)
     }
   }
 
@@ -726,12 +814,51 @@ export default function NewRoutine() {
               />
             </div>
 
-            {/* Days preview */}
+            {/* Days — editable */}
             <div className="space-y-3 mb-4">
               {proposed.days.map((day) => (
-                <PreviewDayCard key={day.dayNumber} day={day} />
+                <EditableDayCard
+                  key={day.dayNumber}
+                  day={day}
+                  onUpdate={(idx, field, val) => updateItem(day.dayNumber, idx, field, val)}
+                  onRemove={(idx) => removeItem(day.dayNumber, idx)}
+                />
               ))}
             </div>
+
+            {/* AI refinement */}
+            {path === 'ai' && (
+              <div className="card px-4 py-3 mb-4">
+                <p className="text-xs font-medium text-muted uppercase tracking-wide mb-2">Sugerir cambio con IA</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={suggestion}
+                    onChange={(e) => setSuggestion(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') void handleRefine() }}
+                    placeholder='Ej: "Menos ejercicios de pierna" o "Más volumen en espalda"'
+                    className="flex-1 text-sm bg-surface-hi border border-border rounded-xl px-3 py-2 text-text placeholder:text-muted/50 focus:border-primary focus:outline-none"
+                    disabled={refining}
+                  />
+                  <button
+                    onClick={() => void handleRefine()}
+                    disabled={refining || !suggestion.trim()}
+                    className="btn-primary px-3 py-2 gap-1.5 shrink-0"
+                    title="Refinar con IA"
+                  >
+                    {refining ? <RotateCw className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  </button>
+                </div>
+                <button
+                  onClick={() => void handleRegenerate()}
+                  disabled={generating}
+                  className="w-full flex items-center justify-center gap-2 text-xs text-muted hover:text-text mt-2 py-1 transition-colors"
+                >
+                  <RotateCw className={`w-3 h-3 ${generating ? 'animate-spin' : ''}`} />
+                  Regenerar desde cero
+                </button>
+              </div>
+            )}
 
             {/* Errors */}
             {(saveError ?? genError) && (
@@ -758,16 +885,6 @@ export default function NewRoutine() {
                 {saving ? 'Guardando...' : 'Guardar rutina'}
               </button>
             </div>
-
-            {path === 'ai' && (
-              <button
-                onClick={() => void handleRegenerate()}
-                className="w-full flex items-center justify-center gap-2 text-sm text-muted hover:text-text py-2 transition-colors"
-              >
-                <RotateCw className="w-3.5 h-3.5" />
-                Regenerar con IA
-              </button>
-            )}
           </div>
         )}
 

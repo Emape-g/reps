@@ -69,9 +69,25 @@ Este nivel de detalle — archivo específico, comportamiento exacto, endpoints 
 
 ---
 
+## Pipeline de CI/CD
+
+El repo tiene cuatro workflows en `.github/workflows/`:
+
+**`ci.yml`** — corre en cada push y PR. Hace type-check, build y lint en paralelo para server y client. Es el gate que bloquea merges rotos.
+
+**`cd.yml`** — corre solo en push a `main`. Ejecuta `prisma migrate deploy` contra la base de datos de producción y despliega el server a Railway y el client a Vercel de forma secuencial (primero el backend, después el frontend).
+
+**`security.yml`** — corre todos los lunes a las 9am UTC y también en cada push a `main`. Ejecuta `npm audit --audit-level=high` en server y client en paralelo. Falla el pipeline si encuentra vulnerabilidades de severidad alta o crítica en las dependencias. Útil para detectar CVEs nuevos que aparecen después de que el proyecto está publicado, sin tener que revisarlo manualmente.
+
+**`pr-check.yml`** — corre en cada PR hacia `main`. Tiene dos jobs:
+- **Size check**: cuenta archivos y líneas cambiadas. Avisa (⚠️) si el PR supera 15 archivos o 400 líneas, y falla (❌) si supera 30 archivos u 800 líneas. El reporte queda visible en el resumen del workflow en GitHub. El objetivo es mantener los PRs enfocados y fáciles de revisar.
+- **Conventional commits**: verifica que todos los commits del PR sigan el formato `tipo(scope): descripción` (feat, fix, docs, refactor, etc.). Esto mantiene el historial legible y permite generar changelogs automáticos en el futuro.
+
+---
+
 ## Checklist de entrega
 
 - [x] Repo público en GitHub
-- [x] Pipeline de CI/CD configurado (GitHub Actions — `ci.yml` + `cd.yml`)
+- [x] Pipeline de CI/CD configurado (GitHub Actions — `ci.yml` + `cd.yml` + `security.yml` + `pr-check.yml`)
 - [x] Informe de herramientas (este documento)
 - [x] Demo funcional: [https://reps-client.vercel.app](https://reps-client.vercel.app)
