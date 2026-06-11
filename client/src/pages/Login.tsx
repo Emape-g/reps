@@ -85,14 +85,6 @@ export default function Login() {
             Registrate
           </Link>
         </p>
-
-
-        <p className="text-center text-sm text-muted mt-5">
-          ¿No tenés cuenta?{' '}
-          <Link to="/register" className="text-primary font-medium hover:underline">
-            Registrate
-          </Link>
-        </p>
       </div>
     </div>
   )
