@@ -1,0 +1,92 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  size-check:
+    name: PR size
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR size
+        env:
+          FILES_WARN:  15
+          FILES_FAIL:  30
+          LINES_WARN:  400
+          LINES_FAIL:  800
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          FILES=$(git diff --name-only "$BASE" "$HEAD" | wc -l)
+          LINES=$(git diff --shortstat "$BASE" "$HEAD" | grep -oP '\d+ insertion' | grep -oP '\d+' || echo 0)
+          DELETED=$(git diff --shortstat "$BASE" "$HEAD" | grep -oP '\d+ deletion' | grep -oP '\d+' || echo 0)
+          TOTAL=$((LINES + DELETED))
+
+          echo "### PR Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value | Limit |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Files changed | $FILES | warn >$FILES_WARN / fail >$FILES_FAIL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Lines changed | $TOTAL | warn >$LINES_WARN / fail >$LINES_FAIL |" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$FILES" -gt "$FILES_FAIL" ] || [ "$TOTAL" -gt "$LINES_FAIL" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **PR is too large.** Consider splitting it into smaller, focused PRs." >> $GITHUB_STEP_SUMMARY
+            echo "PR too large: $FILES files, $TOTAL lines changed"
+            exit 1
+          elif [ "$FILES" -gt "$FILES_WARN" ] || [ "$TOTAL" -gt "$LINES_WARN" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **PR is getting large.** Consider splitting if possible." >> $GITHUB_STEP_SUMMARY
+            echo "PR is large but within limits: $FILES files, $TOTAL lines changed"
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "✅ **PR size is good.** $FILES files, $TOTAL lines changed." >> $GITHUB_STEP_SUMMARY
+            echo "PR size OK: $FILES files, $TOTAL lines changed"
+          fi
+
+  conventional-commits:
+    name: Commit message format
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          BASE=${{ github.event.pull_request.base.sha }}
+          HEAD=${{ github.event.pull_request.head.sha }}
+
+          PATTERN='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+'
+          FAILED=0
+
+          echo "### Commit Message Check" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Expected format: \`type(scope): description\`" >> $GITHUB_STEP_SUMMARY
+          echo "Valid types: feat, fix, docs, style, refactor, test, chore, perf, ci, build, revert" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          while IFS= read -r msg; do
+            if echo "$msg" | grep -qP "$PATTERN"; then
+              echo "✅ $msg" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ $msg" >> $GITHUB_STEP_SUMMARY
+              FAILED=1
+            fi
+          done < <(git log --format="%s" "$BASE".."$HEAD")
+
+          if [ "$FAILED" -eq 1 ]; then
+            echo ""
+            echo "Some commits don't follow the conventional commits format."
+            exit 1
+          fi
