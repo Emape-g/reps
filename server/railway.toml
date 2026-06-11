@@ -1,7 +1,7 @@
 [build]
 builder = "nixpacks"
 # Install ALL deps (including devDeps for tsx/prisma CLI) then generate client + compile
-buildCommand = "npm ci --include=dev && npm run build"
+buildCommand = "npm install && npm run build"
 
 [deploy]
 # Apply migrations then start — db:push is safe to re-run on restarts
