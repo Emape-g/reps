@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/Emape-g/reps/actions/workflows/ci.yml/badge.svg)](https://github.com/Emape-g/reps/actions/workflows/ci.yml)
 [![CD](https://github.com/Emape-g/reps/actions/workflows/cd.yml/badge.svg)](https://github.com/Emape-g/reps/actions/workflows/cd.yml)
-[![Deploy](https://img.shields.io/badge/demo-live-brightgreen)](https://reps-client.vercel.app)
+[![Deploy](https://img.shields.io/badge/demo-live-brightgreen)](https://reps-henna.vercel.app)
 
 > Built with [Claude Code](https://claude.ai/code) · Powered by Groq + Llama 3.3
 
@@ -54,7 +54,7 @@ Ver [INFORME.md](./INFORME.md) para la bitácora completa de la experiencia.
 
 ## Demo en vivo
 
-🔗 **[https://reps-client.vercel.app](https://reps-client.vercel.app)**
+🔗 **[https://reps-henna.vercel.app](https://reps-henna.vercel.app)**
 
 > Credenciales de demo impresas al correr el seed (`npm run db:seed`).
 
