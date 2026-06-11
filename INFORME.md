@@ -75,7 +75,9 @@ El repo tiene cuatro workflows en `.github/workflows/`:
 
 **`ci.yml`** — corre en cada push y PR. Hace type-check, build y lint en paralelo para server y client. Es el gate que bloquea merges rotos.
 
-**`cd.yml`** — corre solo en push a `main`. Ejecuta `prisma migrate deploy` contra la base de datos de producción y despliega el server a Railway y el client a Vercel de forma secuencial (primero el backend, después el frontend).
+**`claude.yml`** — agente de IA autónomo. Cuando alguien menciona `@claude` en un issue o PR, Claude lee el repositorio, aplica los cambios pedidos y abre/actualiza un Pull Request por su cuenta.
+
+**Despliegue continuo** — el deploy es automático vía la integración nativa de Railway (backend + base de datos) y Vercel (frontend) con GitHub: cada push a `main` redespliega solo. Railway corre `prisma migrate deploy` y el seed al arrancar (configurado en `railway.toml`), así que no hace falta un workflow de CD dedicado.
 
 **`security.yml`** — corre todos los lunes a las 9am UTC y también en cada push a `main`. Ejecuta `npm audit --audit-level=high` en server y client en paralelo. Falla el pipeline si encuentra vulnerabilidades de severidad alta o crítica en las dependencias. Útil para detectar CVEs nuevos que aparecen después de que el proyecto está publicado, sin tener que revisarlo manualmente.
 
@@ -88,6 +90,6 @@ El repo tiene cuatro workflows en `.github/workflows/`:
 ## Checklist de entrega
 
 - [x] Repo público en GitHub
-- [x] Pipeline de CI/CD configurado (GitHub Actions — `ci.yml` + `cd.yml` + `security.yml` + `pr-check.yml`)
+- [x] Pipeline de CI/CD configurado (GitHub Actions — `ci.yml` + `security.yml` + `pr-check.yml` + `claude.yml`; deploy automático vía Railway + Vercel)
 - [x] Informe de herramientas (este documento)
-- [x] Demo funcional: [https://reps-client.vercel.app](https://reps-client.vercel.app)
+- [x] Demo funcional: [https://reps-henna.vercel.app](https://reps-henna.vercel.app)

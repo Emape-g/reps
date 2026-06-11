@@ -1,7 +1,6 @@
 # Reps — AI-Powered Workout Tracker
 
 [![CI](https://github.com/Emape-g/reps/actions/workflows/ci.yml/badge.svg)](https://github.com/Emape-g/reps/actions/workflows/ci.yml)
-[![CD](https://github.com/Emape-g/reps/actions/workflows/cd.yml/badge.svg)](https://github.com/Emape-g/reps/actions/workflows/cd.yml)
 [![Deploy](https://img.shields.io/badge/demo-live-brightgreen)](https://reps-henna.vercel.app)
 
 > Built with [Claude Code](https://claude.ai/code) · Powered by Groq + Llama 3.3
@@ -135,25 +134,16 @@ Abrí [http://localhost:5173](http://localhost:5173).
 
 ## CI/CD con GitHub Actions
 
-El repo tiene dos workflows en `.github/workflows/`:
+El repo tiene cuatro workflows en `.github/workflows/`:
 
 | Workflow | Trigger | Qué hace |
 |---|---|---|
 | `ci.yml` | Cualquier push / PR a main | Type-check, build y lint de client y server en paralelo |
-| `cd.yml` | Push a `main` | Corre `prisma migrate deploy` + deploy a Railway (server) y Vercel (client) |
+| `security.yml` | Lunes 9am UTC + push a main | `npm audit` de severidad alta/crítica en client y server |
+| `pr-check.yml` | Cada PR a main | Chequea tamaño del PR y formato de commits convencionales |
+| `claude.yml` | Mención `@claude` en issues/PRs | Agente de IA que lee el repo, hace cambios y abre PRs |
 
-Para habilitar el CD, agregá los siguientes secrets en tu repo de GitHub:
-
-| Secret | Descripción |
-|---|---|
-| `RAILWAY_TOKEN` | Token de Railway (`railway login` → Settings) |
-| `RAILWAY_SERVICE_ID` | ID del servicio en Railway |
-| `DATABASE_URL` | Connection string de producción (para migrations) |
-| `VERCEL_TOKEN` | Token de Vercel (Settings → Tokens) |
-| `VERCEL_ORG_ID` | ID de tu organización en Vercel |
-| `VERCEL_PROJECT_ID` | ID del proyecto en Vercel |
-
-> **Nota:** Si usás el deploy automático de Vercel + Railway desde GitHub (sin el workflow de CD), solo necesitás el `ci.yml`.
+**Despliegue:** el deploy es automático vía la integración nativa de **Railway** (backend + DB) y **Vercel** (frontend) con GitHub — cada push a `main` redespliega solo. Railway corre `prisma migrate deploy` y el seed al arrancar (ver `railway.toml`).
 
 ---
 
@@ -181,7 +171,9 @@ reps/
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml          # CI: type-check + build + lint
-│       └── cd.yml          # CD: migrate + deploy a Railway y Vercel
+│       ├── security.yml    # npm audit semanal
+│       ├── pr-check.yml    # tamaño de PR + commits convencionales
+│       └── claude.yml      # agente de IA (@claude)
 ├── client/                 # React + Vite frontend
 │   ├── src/
 │   │   ├── components/     # OptimizePanel, ExerciseSearchModal, ProtectedRoute
