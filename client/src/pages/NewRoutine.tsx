@@ -447,7 +447,7 @@ export default function NewRoutine() {
       })
       const data = (await res.json()) as { id: string; error?: string }
       if (!res.ok) throw new Error(data.error ?? 'Error al crear la rutina')
-      navigate(`/routines/${data.id}/edit`, { replace: true })
+      navigate('/', { replace: true })
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Error al crear la rutina')
     } finally {
