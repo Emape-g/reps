@@ -95,7 +95,7 @@ export default function Profile() {
 
       {/* Sticky header */}
       <header className="bg-surface border-b border-border px-4 py-3 sticky top-0 z-10">
-        <div className="max-w-lg mx-auto flex items-center gap-3">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
           <Link to="/" className="btn-ghost p-1.5 shrink-0">
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -116,7 +116,7 @@ export default function Profile() {
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-4 pb-24">
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-4 pb-24">
 
         {/* ── Account info ────────────────────────────────────────────────── */}
         <section className="card overflow-hidden">

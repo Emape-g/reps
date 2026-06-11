@@ -117,7 +117,7 @@ function RestTimerBar({
           style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+      <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
         <div className="flex-1 min-w-0">
           <p className="text-xs text-muted truncate">
             Descanso · {timer.exerciseName}
@@ -156,7 +156,7 @@ function RestTimerBar({
 
 function SkeletonSession() {
   return (
-    <div className="max-w-lg mx-auto px-4 py-6 space-y-4 animate-pulse">
+    <div className="max-w-2xl mx-auto px-4 py-6 space-y-4 animate-pulse">
       {[1, 2, 3, 4].map((i) => (
         <div key={i} className="card px-5 py-4">
           <div className="flex items-start justify-between gap-2 mb-3">
@@ -375,7 +375,7 @@ export default function ActiveSession() {
           </button>
           <h1 className="text-lg font-display font-bold text-text">Sesión</h1>
         </header>
-        <main className="max-w-lg mx-auto px-4 py-16 text-center">
+        <main className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-danger/10 rounded-2xl mb-4">
             <AlertTriangle className="w-7 h-7 text-danger" />
           </div>
@@ -415,7 +415,7 @@ export default function ActiveSession() {
           </button>
           <h1 className="text-lg font-display font-bold text-text">Resumen de sesión</h1>
         </header>
-        <main className="max-w-lg mx-auto px-4 py-6 pb-10">
+        <main className="max-w-2xl mx-auto px-4 py-6 pb-10">
           {/* Completion banner */}
           <div className="card px-5 py-4 mb-5 text-center border-success/20 bg-success/5">
             <div className="inline-flex items-center justify-center w-10 h-10 bg-success/15 rounded-xl mb-3">
@@ -519,7 +519,7 @@ export default function ActiveSession() {
         )}
       </header>
 
-      <main className={`max-w-lg mx-auto px-4 pt-6 space-y-4 transition-[padding-bottom] duration-300 ${restTimer ? 'pb-32' : 'pb-8'}`}>
+      <main className={`max-w-2xl mx-auto px-4 pt-6 space-y-4 transition-[padding-bottom] duration-300 ${restTimer ? 'pb-32' : 'pb-8'}`}>
         {/* Empty day */}
         {day.items.length === 0 && (
           <div className="text-center py-16">

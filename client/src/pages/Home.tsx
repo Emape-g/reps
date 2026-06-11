@@ -174,7 +174,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-bg pb-20">
         {header}
-        <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
+        <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
           <SkeletonStats />
           <div>
             <div className="flex items-center justify-between mb-4">
@@ -196,7 +196,7 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-bg pb-20">
         {header}
-        <main className="max-w-lg mx-auto px-4 py-16 text-center">
+        <main className="max-w-2xl mx-auto px-4 py-16 text-center">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-danger/10 rounded-2xl mb-4">
             <WifiOff className="w-7 h-7 text-danger" />
           </div>
@@ -215,7 +215,7 @@ export default function Home() {
     <div className="min-h-screen bg-bg pb-20">
       {header}
 
-      <main className="max-w-lg mx-auto px-4 py-6 space-y-5">
+      <main className="max-w-2xl mx-auto px-4 py-6 space-y-5">
 
         {/* ── Continuar hoy ───────────────────────────────────────────────── */}
         {todayWorkout && (
