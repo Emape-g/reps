@@ -17,6 +17,10 @@ model User {
   priorities     String?
   onboardingDone Boolean       @default(false)
   theme          String?
+  weight         Float?
+  height         Float?
+  age            Int?
+  gender         String?
   createdAt      DateTime      @default(now())
   routines       Routine[]
   progressLogs   ProgressLog[]

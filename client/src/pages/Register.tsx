@@ -51,6 +51,7 @@ export default function Register() {
               <label className="text-sm font-medium text-text block mb-1.5">Nombre</label>
               <input
                 type="text"
+                autoComplete="name"
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -63,6 +64,7 @@ export default function Register() {
               <label className="text-sm font-medium text-text block mb-1.5">Email</label>
               <input
                 type="email"
+                autoComplete="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

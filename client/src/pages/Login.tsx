@@ -86,12 +86,14 @@ export default function Login() {
           </Link>
         </p>
 
-        <p className="text-center text-xs text-muted/60 mt-3">
-          Demo: demo@fitai.app / demo1234
+
+        <p className="text-center text-sm text-muted mt-5">
+          ¿No tenés cuenta?{' '}
+          <Link to="/register" className="text-primary font-medium hover:underline">
+            Registrate
+          </Link>
         </p>
       </div>
     </div>
   )
 }
-1234
-

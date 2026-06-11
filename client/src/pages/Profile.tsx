@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ArrowLeft, User, Dumbbell, Zap, Wind, Flame, Check,
-  AlertCircle, Sun, Moon, LogOut, CheckCircle2,
+  AlertCircle, Sun, Moon, LogOut, CheckCircle2, Activity,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
@@ -32,6 +32,10 @@ export default function Profile() {
   const [priorities, setPriorities] = useState<string[]>(() => {
     try { return JSON.parse(user?.priorities ?? '[]') as string[] } catch { return [] }
   })
+  const [weight, setWeight] = useState(user?.weight?.toString() ?? '')
+  const [height, setHeight] = useState(user?.height?.toString() ?? '')
+  const [age, setAge]       = useState(user?.age?.toString() ?? '')
+  const [gender, setGender] = useState(user?.gender ?? '')
 
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
@@ -57,6 +61,10 @@ export default function Profile() {
           goal,
           daysPerWeek,
           priorities: JSON.stringify(priorities),
+          weight:  weight  !== '' ? parseFloat(weight)  : null,
+          height:  height  !== '' ? parseFloat(height)  : null,
+          age:     age     !== '' ? parseInt(age, 10)   : null,
+          gender:  gender  !== '' ? gender              : null,
         }),
       })
       if (!res.ok) {
@@ -138,6 +146,68 @@ export default function Profile() {
               className="input-base"
               placeholder="Tu nombre"
             />
+          </div>
+        </section>
+
+        {/* ── Physical stats ───────────────────────────────────────────────── */}
+        <section className="card px-5 py-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-4 h-4 text-primary" />
+            <h2 className="text-sm font-semibold text-text">Datos físicos</h2>
+          </div>
+          <p className="text-xs text-muted mb-4 -mt-2">
+            Opcionales. La IA los usa para personalizar las sugerencias de tu rutina.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-muted block mb-1">Peso (kg)</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={20} max={300} step={0.5}
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                placeholder="ej. 75"
+                className="input-base"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted block mb-1">Altura (cm)</label>
+              <input
+                type="number"
+                inputMode="decimal"
+                min={100} max={250} step={1}
+                value={height}
+                onChange={(e) => setHeight(e.target.value)}
+                placeholder="ej. 175"
+                className="input-base"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted block mb-1">Edad</label>
+              <input
+                type="number"
+                inputMode="numeric"
+                min={10} max={100} step={1}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="ej. 25"
+                className="input-base"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted block mb-1">Género</label>
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                className="input-base"
+              >
+                <option value="">Sin especificar</option>
+                <option value="masculino">Masculino</option>
+                <option value="femenino">Femenino</option>
+                <option value="otro">Otro</option>
+              </select>
+            </div>
           </div>
         </section>
 
@@ -223,7 +293,7 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* ── Appearance ───────────────────────────────────────────────────── */}
+        {/* Appearance */}
         <section className="card px-5 py-4">
           <h2 className="text-sm font-semibold text-text mb-3">Apariencia</h2>
           <button
@@ -238,7 +308,6 @@ export default function Profile() {
                 {theme === 'dark' ? 'Modo oscuro' : 'Modo claro'}
               </span>
             </div>
-            {/* Toggle pill */}
             <div className={`w-10 h-6 rounded-full transition-colors relative shrink-0 ${
               theme === 'dark' ? 'bg-primary' : 'bg-border'
             }`}>
@@ -249,7 +318,6 @@ export default function Profile() {
           </button>
         </section>
 
-        {/* ── Feedback messages ────────────────────────────────────────────── */}
         {saveError && (
           <div className="flex items-start gap-2 bg-danger/8 border border-danger/20 text-danger text-sm px-4 py-3 rounded-xl">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -257,7 +325,6 @@ export default function Profile() {
           </div>
         )}
 
-        {/* ── Logout ───────────────────────────────────────────────────────── */}
         <section className="card px-5 py-2">
           <button
             onClick={handleLogout}

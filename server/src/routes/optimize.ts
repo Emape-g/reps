@@ -136,7 +136,7 @@ REGLAS ESTRICTAS:
 
 function buildUserPrompt(
   routine: RoutineData,
-  user: { name: string; goal: string | null; daysPerWeek: number | null; priorities: string | null } | null,
+  user: { name: string; goal: string | null; daysPerWeek: number | null; priorities: string | null; weight?: number | null; height?: number | null; age?: number | null; gender?: string | null } | null,
   muscleSets: Map<string, number>,
   anteriorSets: number,
   posteriorSets: number,
@@ -193,6 +193,13 @@ function buildUserPrompt(
   "summary":string
 }`
 
+  const physicalStats = [
+    user?.weight != null ? `Peso: ${user.weight} kg` : null,
+    user?.height != null ? `Altura: ${user.height} cm` : null,
+    user?.age    != null ? `Edad: ${user.age} años`   : null,
+    user?.gender != null ? `Género: ${user.gender}`   : null,
+  ].filter(Boolean)
+
   return `# Análisis de rutina de entrenamiento
 
 ## Perfil del usuario
@@ -200,6 +207,7 @@ function buildUserPrompt(
 - Objetivo: ${user?.goal ?? 'No especificado'}
 - Días de entrenamiento por semana: ${user?.daysPerWeek ?? 'No especificado'}
 - Grupos priorizados: ${priorities.length > 0 ? priorities.join(', ') : 'No especificados'}
+${physicalStats.length > 0 ? `- Datos físicos: ${physicalStats.join(' | ')}` : ''}
 
 ## Volumen semanal calculado (primario×1 + secundario×0.5)
 ${muscleTable || '  (rutina vacía)'}
@@ -283,7 +291,7 @@ router.post('/:id/optimize', requireAuth, async (req, res) => {
     const [user, catalog] = await Promise.all([
       prisma.user.findUnique({
         where: { id: req.userId },
-        select: { name: true, goal: true, daysPerWeek: true, priorities: true },
+        select: { name: true, goal: true, daysPerWeek: true, priorities: true, weight: true, height: true, age: true, gender: true },
       }),
       prisma.exercise.findMany({
         orderBy: { name: 'asc' },
@@ -335,8 +343,8 @@ router.post('/:id/optimize', requireAuth, async (req, res) => {
 
     res.json(augmented)
   } catch (err) {
-    console.error('[optimize]', err)
-    const message = err instanceof Error ? err.message : 'Error desconocido'
+    const message = err instanceof Error ? err.message : 'Error interno del servidor'
+    console.error('[optimize]', message)
     res.status(500).json({ error: message })
   }
 })

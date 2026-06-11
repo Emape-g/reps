@@ -13,6 +13,10 @@ const USER_SELECT = {
   priorities: true,
   onboardingDone: true,
   theme: true,
+  weight: true,
+  height: true,
+  age: true,
+  gender: true,
   createdAt: true,
 } as const
 
@@ -44,12 +48,10 @@ router.get('/me/stats', requireAuth, async (req, res) => {
       }),
     ])
 
-    // Distinct training days this week
     const distinctDays = new Set(logsThisWeek.map((l) => l.loggedAt.toISOString().split('T')[0]))
     const trainingsThisWeek = distinctDays.size
     const weeklyVolume = Math.round(logsThisWeek.reduce((sum, l) => sum + l.weight * l.reps, 0))
 
-    // Consecutive week streak (includes current week if it has logs; otherwise starts from last logged week)
     const weeksWithLogs = new Set(allLogs.map((l) => getWeekStartISO(l.loggedAt)))
     let checkStr = currentWeekStartStr
     if (!weeksWithLogs.has(checkStr)) {
@@ -102,7 +104,6 @@ router.get('/me/exercise-stats', requireAuth, async (req, res) => {
 
     const exerciseMap = new Map(exercises.map((e) => [e.id, e]))
 
-    // Per-exercise, per-date max weight map
     const sessionMaxByExercise = new Map<string, Map<string, number>>()
     for (const log of recentLogs) {
       const dateKey = log.loggedAt.toISOString().split('T')[0]
@@ -115,7 +116,6 @@ router.get('/me/exercise-stats', requireAuth, async (req, res) => {
     const stats = groups.map((g) => {
       const ex = exerciseMap.get(g.exerciseId)
       const byDate = sessionMaxByExercise.get(g.exerciseId) ?? new Map<string, number>()
-      // Sort dates descending (ISO strings sort lexicographically = chronologically)
       const weights = [...byDate.entries()]
         .sort(([a], [b]) => (a > b ? -1 : 1))
         .map(([, w]) => w)
@@ -164,23 +164,31 @@ router.get('/me', requireAuth, async (req, res) => {
 
 router.put('/me', requireAuth, async (req, res) => {
   try {
-    const { name, daysPerWeek, goal, priorities, onboardingDone, theme } = req.body as {
+    const { name, daysPerWeek, goal, priorities, onboardingDone, theme, weight, height, age, gender } = req.body as {
       name?: string
       daysPerWeek?: number
       goal?: string
       priorities?: string
       onboardingDone?: boolean
       theme?: string
+      weight?: number | null
+      height?: number | null
+      age?: number | null
+      gender?: string | null
     }
     const user = await prisma.user.update({
       where: { id: req.userId },
       data: {
-        ...(name          != null && { name }),
-        ...(daysPerWeek   != null && { daysPerWeek }),
-        ...(goal          != null && { goal }),
-        ...(priorities    != null && { priorities }),
-        ...(onboardingDone != null && { onboardingDone }),
-        ...(theme         != null && { theme }),
+        ...(name           != null  && { name }),
+        ...(daysPerWeek    != null  && { daysPerWeek }),
+        ...(goal           != null  && { goal }),
+        ...(priorities     != null  && { priorities }),
+        ...(onboardingDone != null  && { onboardingDone }),
+        ...(theme          != null  && { theme }),
+        ...(weight         !== undefined && { weight }),
+        ...(height         !== undefined && { height }),
+        ...(age            !== undefined && { age }),
+        ...(gender         !== undefined && { gender }),
       },
       select: USER_SELECT,
     })

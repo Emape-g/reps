@@ -17,6 +17,10 @@ export interface AuthUser {
   priorities: string | null
   onboardingDone: boolean
   theme: string | null
+  weight: number | null
+  height: number | null
+  age: number | null
+  gender: string | null
   createdAt?: string
 }
 
