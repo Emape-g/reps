@@ -5,7 +5,7 @@ buildCommand = "npm install && npm run build"
 
 [deploy]
 # Apply migrations then start — db:push is safe to re-run on restarts
-startCommand = "npx prisma migrate deploy && node dist/index.js"
+startCommand = "npx prisma migrate deploy && npx prisma db seed && node dist/index.js"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
